@@ -2,11 +2,11 @@
 
 Automatically close the oldest tabs when your browser gets cluttered with too many tabs. Say goodbye to a messy browser experience forever!
 
-Now available for both **Chrome** and **Safari**!
+Now available for **Chrome**, **Chromium**, and **Safari**!
 
 🌐 English | [中文](README-CN.md)
 
-> A browser extension to maintain a clean browser by auto-closing old browser tabs. Available for Chrome & Safari.
+> A browser extension to maintain a clean browser by auto-closing old browser tabs. Available for Chrome, Chromium & Safari.
 
 ---
 

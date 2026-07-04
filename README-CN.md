@@ -2,11 +2,11 @@
 
 当打开的网页太多时，自动关掉最老的标签页，让浏览器永远清爽！
 
-现已支持 **Chrome** 和 **Safari**！
+现已支持 **Chrome**、**Chromium** 和 **Safari**！
 
 🌐 [English](README.md) | 中文
 
-> 浏览器扩展，自动管理标签页，保持浏览器清爽。支持 Chrome 和 Safari。
+> 浏览器扩展，自动管理标签页，保持浏览器清爽。支持 Chrome、Chromium 和 Safari。
 
 ---
 
