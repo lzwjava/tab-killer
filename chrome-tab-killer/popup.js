@@ -1,96 +1,67 @@
-require([], function () {
-  var GlobalObject = chrome.extension.getBackgroundPage().GlobalObject;
+$(document).ready(function () {
 
-  Popup = {};
-
-  Popup.optionsTab = {};
-
-  Popup.optionsTab.init = function (context) {
-
-    function onBlurInput() {
-      var key = this.id;
-      Popup.optionsTab.saveOption(key, $(this).val());
-    }
-
-    $('#maxTabs').keyup(_.debounce(onBlurInput, 200));
-
-    Popup.optionsTab.loadOptions();
+  const DEFAULTS = {
+    maxTabs: 15,
+    whiteList: ['chrome://*']
   };
 
-  Popup.optionsTab.loadOptions = function () {
-    $('#maxTabs').val(GlobalObject.settings.get('maxTabs'));
+  let settings = {};
 
-    var whiteList = GlobalObject.settings.get('whiteList');
-    Popup.optionsTab.buildWhiteListTable(whiteList);
-
-    var $whiteListInput = $('#white-list-input');
-    var $whiteListAdd = $('#white-list-add');
-
-    var isValid = function (pattern) {
-      return /\S/.test(pattern);
-    };
-
-    $whiteListInput.on('input', function () {
-      if (isValid($whiteListInput.val())) {
-        $whiteListAdd.removeAttr('disabled');
-      } else {
-        $whiteListAdd.attr('disabled');
-      }
+  function loadOptions() {
+    chrome.storage.sync.get(DEFAULTS, (items) => {
+      settings = items;
+      $('#maxTabs').val(settings.maxTabs);
+      buildWhiteListTable(settings.whiteList);
     });
+  }
 
-    $whiteListAdd.click(function () {
-      if (isValid($whiteListInput.val()) == false) {
-        return;
-      }
-      whiteList.push($whiteListInput.val());
-      $whiteListInput.val('').trigger('input').focus();
-      Popup.optionsTab.saveOption('whiteList', whiteList);
-      Popup.optionsTab.buildWhiteListTable(whiteList);
-    })
-  };
-
-  Popup.optionsTab.saveOption = function (key, value, hideStatus) {
-    if (!hideStatus) {
-      $('#status').html();
-    }
-    GlobalObject.settings.set(key, value);
-    if (!hideStatus) {
+  function saveOption(key, value) {
+    chrome.storage.sync.set({ [key]: value }, () => {
+      settings[key] = value;
       $('#status').removeClass('invisible').css('opacity', '100')
-        .html('Saving...').delay(50).animate({opacity: 0});
-    }
-  };
-
-  /*white list*/
-  Popup.optionsTab.buildWhiteListTable = function (whiteList) {
-    var urlItemTemplate = _.template($("#url-item-template").html());
-    var $wlTable = $('table#white-list tbody');
-    $wlTable.html('');
-    for (var i = 0; i < whiteList.length; i++) {
-      var $tr = $(urlItemTemplate({url: whiteList[i]}));
-      var $deleteLink = $tr.find('a.deleteLink').parent();
-      //console.dir($deleteLink.html());
-      console.dir(whiteList);
-      $deleteLink.click(function () {
-        console.log('click');
-        whiteList.splice(whiteList.indexOf($(this).data('pattern')), 1);
-        Popup.optionsTab.saveOption('whiteList', whiteList, true);
-        Popup.optionsTab.buildWhiteListTable(whiteList);
-      }).data('pattern', whiteList[i]);
-      $wlTable.append($tr);
-    }
-  };
-
-  $(document).ready(function () {
-    $('a[data-toggle="tab"]').on('show', function (e) {
-      var tabId = e.target.hash;
-      switch (tabId) {
-        case '#tabOptions' :
-          Popup.optionsTab.init($('div#tabOptions'));
-          break;
-      }
+        .html('Saving…').delay(50).animate({ opacity: 0 });
     });
+  }
 
-    $('a[href="#tabOptions"]').click();
+  function buildWhiteListTable(list) {
+    const $tbody = $('table#white-list tbody').empty();
+    list.forEach((pattern, idx) => {
+      const $tr = $('<tr>');
+      $tr.append($('<td>').text(pattern));
+      const $remove = $('<a href="#" class="deleteLink">Remove</a>');
+      $remove.on('click', function () {
+        list.splice(idx, 1);
+        saveOption('whiteList', list);
+        buildWhiteListTable(list);
+      });
+      $tr.append($('<td>').append($remove));
+      $tbody.append($tr);
+    });
+  }
+
+  // --- Event wiring ---
+
+  $('#maxTabs').on('keyup', _.debounce(function () {
+    const val = parseInt($(this).val(), 10);
+    if (!isNaN(val) && val > 0 && val <= 200) {
+      saveOption('maxTabs', val);
+    }
+  }, 200));
+
+  $('#white-list-add').on('click', function () {
+    const $input = $('#white-list-input');
+    const val = $input.val().trim();
+    if (!val) return;
+    const list = [...settings.whiteList, val];
+    saveOption('whiteList', list);
+    buildWhiteListTable(list);
+    $input.val('').focus();
   });
 
+  $('#white-list-input').on('input', function () {
+    const disabled = !$(this).val().trim();
+    $('#white-list-add').prop('disabled', disabled);
+  });
+
+  loadOptions();
 });
